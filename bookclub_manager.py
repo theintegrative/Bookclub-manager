@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import pymongo
 from pprint import pprint
-import bookclub_test_data as td
+import testing_data as td
 
 def first_day():
     now = pd.Timestamp.now() - pd.offsets.MonthBegin(1)
