@@ -1,16 +1,22 @@
+#!/usr/bin/env python
+# coding: utf-8
+
 import pandas as pd
 import numpy as np
 import pymongo
 from pprint import pprint
 import testing_data as td
 
+
 def first_day():
     now = pd.Timestamp.now() - pd.offsets.MonthBegin(1)
     return now.strftime('%Y-%m-%d')
 
+
 def last_day():
     now = pd.Timestamp(first_day()) + pd.offsets.MonthBegin(1)
     return now.strftime('%Y-%m-%d')
+
 
 between_dates_query = {"date":{"$gte": first_day(), "$lt": last_day()}}
 vote_count_pipline = [{ "$addFields": {"vote_count": { "$size": "$votes" } } }]
@@ -21,6 +27,7 @@ find_titles = {"title": 1}
 find_books = { "_id": 0, "date": 0, "votes": 0}
 find_nice = { "_id": 0, "votes": 0}
 sort_books = [("vote_count", -1), ("date", 1)] # first highest vote count then lowest date
+
 
 class Collection:
     def __init__(self, collection):
@@ -60,6 +67,7 @@ class Collection:
         for book in self.collection.find(query,fields).sort(sort).limit(total):
             yield book
 
+
 class Manager:
     def __init__(self):
         self.incomming = Collection("incomming")
@@ -68,20 +76,24 @@ class Manager:
         self.total = 3
         self.book_of_month = ""
     
-    def incomming_books(self, books):
-        self.incomming.add_many(books)
+    def add_incomming(self, book):
+        self.incomming.add(book)
+
+    def top_incomming_books(self):
+        # there also needs to be a conditonal for counting how many books there need to be in order for a top to be established 
+        # then send to potential. The minimum needs to be established based on the amount of people in the club times the book suggestion requirement 
         self.incomming.count_votes()
-        return [book for book in self.incomming.find(between_dates_query, find_nice, sort_books, self.total)]
-    
-    def potential_books(self, books):
-        self.potential.add_many(books)
+        top_incomming = [book for book in self.incomming.find(between_dates_query, find_nice, sort_books, self.total)]
+        self.potential.add_many(top_incomming)
+
+    def potential_books(self):
         self.potential.reset_votes()
         random_book = np.random.choice([book for book in self.incomming.find_all({},{},[("date", -1)])])
         self.book_of_month = random_book
         self.potential.delete(random_book)
-        return self.book_of_month
        
     def potential_remove(self):
+        # this is also for generating tests > wil be moved to a dedicated testfile
         self.potential.count_votes()
         for book in self.find(between_dates_query, find_nice, sort_books, self.total):
             self.buffer.add(book)
