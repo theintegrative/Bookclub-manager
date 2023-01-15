@@ -82,15 +82,12 @@ class Manager:
         return self.book_of_month
        
     def potential_remove(self):
-        # this is also for generating tests > wil be moved to a dedicated testfile
-        for title in self.potential.find_all({}, find_titles, sort_books):
-            self.potential.add_votes(title["title"], td.generate_title_votes(1))
         self.potential.count_votes()
         for book in self.find(between_dates_query, find_nice, sort_books, self.total):
             self.buffer.add(book)
             self.potential.delete(book)
             
     def drop_all(self):
-        bookclub.incomming.drop()
-        bookclub.potential.drop()
-        bookclub.buffer.drop()
+        self.incomming.drop()
+        self.potential.drop()
+        self.buffer.drop()
